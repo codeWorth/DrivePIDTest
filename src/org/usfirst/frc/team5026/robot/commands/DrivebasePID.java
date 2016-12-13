@@ -22,12 +22,12 @@ public class DrivebasePID extends Command {
 	private double prevGyroError = 0;
 	private Buffer gyroRateSum;
 	
-    public DrivebasePID() {
-    	requires(Robot.drivebase);
+    	public DrivebasePID() {
+    		requires(Robot.drivebase);
     	
-    	moveRateSum = new Buffer(50);
-    	gyroRateSum = new Buffer(25);
-    }
+    		moveRateSum = new Buffer(50);
+    		gyroRateSum = new Buffer(25);
+    	}
 
 	private double wantedSpeed() {
 		return OI.stick.getY() * joyYToSpeed;
@@ -47,36 +47,48 @@ public class DrivebasePID extends Command {
 		return (RobotMap.gyro.getRate() - wantedTurn());
 	}
 
-    // Called just before this Command runs the first time
-    protected void initialize() {
-    	RobotMap.gyro.calibrate();
-    	RobotMap.gyro.reset();
+    	// Called just before this Command runs the first time
+   	protected void initialize() {
+    		RobotMap.gyro.calibrate();
+    		RobotMap.gyro.reset();
     	
-    	RobotMap.leftEncoder.reset();
-    	RobotMap.rightEncoder.reset();
-    }
+    		RobotMap.leftEncoder.reset();
+    		RobotMap.rightEncoder.reset();
+    	}
 
-    // Called repeatedly when this Command is scheduled to run
-    protected void execute() {
-    	double speedError = encoderError();
-    	double speedDelta = speedError - prevSpeedError;
-    	double speedSum = moveRateSum.push(speedError);
-    	double wantedLeftPower
-    }
+    	// Called repeatedly when this Command is scheduled to run
+    	protected void execute() {
+    		double speedError = encoderError();
+		double speedSum = moveRateSum.push(speedError);
+    		double speedDelta = speedError - prevSpeedError;
+		
+    		double wantedSpeed = speedError * Constants.DRIVE_SPEED_P + speedSum * Constants.DRIVE_SPEED_I + speedDelta * Constants.DRIVE_SPEED_D;
 
-    // Make this return true when this Command no longer needs to run execute()h
-    protected boolean isFinished() {
-        return false;
-    }
+		prevSpeedError = speedError;
 
-    // Called once after isFinished returns true
-    protected void end() {
-    }
+		double turnError = gyroError();
+		double turnSum = turnRateSum.push(turnError);
+		double turnDelta = turnError - prevTurnError;
 
-    // Called when another command which requires one or more of the same
-    // subsystems is scheduled to run
-    protected void interrupted() {
-    }
+		double wantedTurn = turnError * Constants.DRIVE_TURN_P + turnSum * Constants.DRIVE_TURN_I + turnDelta * Constants.DRIVE_TURN_D; 
+
+		prevTurnError = turnError;
+	
+    	}
+
+	// Make this return true when this Command no longer needs to run execute()h
+	protected boolean isFinished() {
+        	return false;
+    	}
+
+    	// Called once after isFinished returns true
+    	protected void end() {
+    	}
+
+    	// Called when another command which requires one or more of the same
+    	// subsystems is scheduled to run
+    	protected void interrupted() {
+    	}
 }
 
 
