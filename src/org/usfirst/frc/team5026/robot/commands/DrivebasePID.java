@@ -12,22 +12,22 @@ import edu.wpi.first.wpilibj.command.Command;
  *
  */
 public class DrivebasePID extends Command {
-	
+
 	private final double joyXToTurn = 2;
 	private final double joyYToSpeed = 3;
-	
+
 	private double prevSpeedError = 0;
 	private Buffer moveRateSum;
-	
+
 	private double prevGyroError = 0;
 	private Buffer gyroRateSum;
-	
-    	public DrivebasePID() {
-    		requires(Robot.drivebase);
-    	
-    		moveRateSum = new Buffer(50);
-    		gyroRateSum = new Buffer(25);
-    	}
+
+	public DrivebasePID() {
+		requires(Robot.drivebase);
+
+		moveRateSum = new Buffer(50);
+		gyroRateSum = new Buffer(25);
+	}
 
 	private double wantedSpeed() {
 		return OI.stick.getY() * joyYToSpeed;
@@ -37,7 +37,7 @@ public class DrivebasePID extends Command {
 	private double wantedTurn() {
 		return OI.stick.getX() * joyXToTurn;
 	}
-	
+
 	private double encoderError() {
 		double averageSpeed = (RobotMap.leftEncoder.getRate() + RobotMap.rightEncoder.getRate()) / 2;
 		return (averageSpeed - wantedSpeed());
@@ -47,48 +47,51 @@ public class DrivebasePID extends Command {
 		return (RobotMap.gyro.getRate() - wantedTurn());
 	}
 
-    	// Called just before this Command runs the first time
-   	protected void initialize() {
-    		RobotMap.gyro.calibrate();
-    		RobotMap.gyro.reset();
-    	
-    		RobotMap.leftEncoder.reset();
-    		RobotMap.rightEncoder.reset();
-    	}
+	// Called just before this Command runs the first time
+	protected void initialize() {
+		RobotMap.gyro.calibrate();
+		RobotMap.gyro.reset();
 
-    	// Called repeatedly when this Command is scheduled to run
-    	protected void execute() {
-    		double speedError = encoderError();
+		RobotMap.leftEncoder.reset();
+		RobotMap.rightEncoder.reset();
+	}
+
+	// Called repeatedly when this Command is scheduled to run
+	protected void execute() {
+		double speedError = encoderError();
 		double speedSum = moveRateSum.push(speedError);
-    		double speedDelta = speedError - prevSpeedError;
-		
-    		double wantedSpeed = speedError * Constants.DRIVE_SPEED_P + speedSum * Constants.DRIVE_SPEED_I + speedDelta * Constants.DRIVE_SPEED_D;
+		double speedDelta = speedError - prevSpeedError;
+
+		double wantedSpeed = speedError * Constants.DRIVE_SPEED_P + speedSum * Constants.DRIVE_SPEED_I + speedDelta * Constants.DRIVE_SPEED_D;
 
 		prevSpeedError = speedError;
 
 		double turnError = gyroError();
-		double turnSum = turnRateSum.push(turnError);
-		double turnDelta = turnError - prevTurnError;
+		double turnSum = gyroRateSum.push(turnError);
+		double turnDelta = turnError - prevGyroError;
 
 		double wantedTurn = turnError * Constants.DRIVE_TURN_P + turnSum * Constants.DRIVE_TURN_I + turnDelta * Constants.DRIVE_TURN_D; 
 
-		prevTurnError = turnError;
-	
-    	}
+		prevGyroError = turnError;
+		
+		RobotMap.leftMotor.set(wantedSpeed + wantedTurn);
+		RobotMap.rightMotor.set(wantedSpeed - wantedTurn);
+
+	}
 
 	// Make this return true when this Command no longer needs to run execute()h
 	protected boolean isFinished() {
-        	return false;
-    	}
+		return false;
+	}
 
-    	// Called once after isFinished returns true
-    	protected void end() {
-    	}
+	// Called once after isFinished returns true
+	protected void end() {
+	}
 
-    	// Called when another command which requires one or more of the same
-    	// subsystems is scheduled to run
-    	protected void interrupted() {
-    	}
+	// Called when another command which requires one or more of the same
+	// subsystems is scheduled to run
+	protected void interrupted() {
+	}
 }
 
 
